@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07090c">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Karar Küresi · AI Asistan & Canlı Ses</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="/css/style.css?v=5">
+</head>
+<body>
+
+<div class="app" id="appRoot">
+  <header class="top">
+    <span class="brand">Karar Küresi</span>
+    <span class="pill" id="status"><b></b><span id="statusT">BOŞTA</span></span>
+    <span class="sp"></span>
+    <span class="clock" id="clock">—</span>
+    <button class="tb" id="bTele" type="button">Telemetri</button>
+    <button class="tb" id="bPhaseTop" type="button">Görünüm</button>
+    <button class="tb" id="bSet" type="button">Ayarlar</button>
+  </header>
+
+  <section class="stats" id="stats">
+    <div class="stat"><div class="lbl">Karar</div><div class="v"><span id="sCount">0</span></div></div>
+    <div class="stat"><div class="lbl">Yönlendirme</div><div class="v"><span id="sLat">—</span><small>ms</small></div></div>
+    <div class="stat"><div class="lbl">Cevap Süresi</div><div class="v"><span id="sResp">—</span><small>sn</small></div></div>
+    <div class="stat"><div class="lbl">Son Güven</div><div class="v"><span id="sConf">—</span></div></div>
+    <div class="stat"><div class="lbl">Kapı Eşiği</div><div class="v"><span id="sGate">0.80</span></div></div>
+    <div class="stat"><div class="lbl">Ses Modu</div><div class="v"><span id="sVoice">KAPALI</span></div></div>
+  </section>
+
+  <ol class="pipe" id="pipe">
+    <li><b>GELDİ</b><em>—</em><i></i></li>
+    <li><b>YÖNLENDİR</b><em>—</em><i></i></li>
+    <li><b>KAPI</b><em>—</em><i></i></li>
+    <li><b>AJAN</b><em>—</em><i></i></li>
+    <li><b>CEVAP</b><em>—</em><i></i></li>
+  </ol>
+
+  <section class="stage" id="stage">
+    <canvas id="globe"></canvas>
+    <div class="case">
+      <span class="t" id="caseT">Kişisel asistan · Hazır</span>
+      <span class="r" id="caseR">Düşüncelerini paylaşabilirsin</span>
+    </div>
+    <div class="tele" id="tele"></div>
+    <div class="zc">
+      <button id="zin" type="button">+</button>
+      <button id="zout" type="button">−</button>
+      <button id="zrst" type="button">⟲</button>
+    </div>
+
+    <!-- Canlı Ses Arayüzü (Küre Üzerinde) -->
+    <div class="voice-hud" id="voiceHud" hidden>
+      <div class="voice-status-badge" id="vState">CANLI SOHBET · DİNLİYOR</div>
+      <div class="voice-sub" id="vSub">Seni dinliyorum, doğal bir şekilde konuşabilirsin...</div>
+      <div class="voice-controls">
+        <button class="v-btn" id="vInterrupt" type="button">Sözünü Kes / Konuş</button>
+        <button class="v-btn end" id="vClose" type="button">Canlı Sesi Bitir ✕</button>
+      </div>
+    </div>
+
+    <div class="tabs" id="tabs"></div>
+    <button class="phase" id="phase" type="button">FAZ · HAYALET</button>
+  </section>
+
+  <aside class="rail">
+    <div class="lbl">Uzman Ajanlar (Kilitlemek için tıkla)</div>
+    <div class="agents" id="agents"></div>
+    <div class="insp" id="insp"></div>
+  </aside>
+
+  <section class="chat">
+    <div class="chat-h">
+      <span class="lbl">Sohbet · <span id="agentName">ajan: otomatik</span></span>
+      <div>
+        <button class="mini" id="bExp" type="button" style="margin-right:6px">Dışa aktar</button>
+        <button class="mini" id="bNew" type="button">Yeni sohbet</button>
+      </div>
+    </div>
+    <div id="msgs" aria-live="polite"></div>
+
+    <div class="img-preview" id="imgPreview" hidden>
+      <img id="imgThumb" src="" alt="Önizleme">
+      <span id="imgName" style="flex:1;overflow:hidden;text-overflow:ellipsis">gorsel.png</span>
+      <button class="mini" id="imgRemove" type="button">KALDIR ✕</button>
+    </div>
+
+    <form class="comp" id="form" autocomplete="off">
+      <input type="file" id="fileInp" accept="image/*" hidden>
+
+      <!-- + menüsü: fotoğraf ve yanıt derinliği -->
+      <div class="pop">
+        <button class="c-btn c-plus" id="bPlus" type="button" aria-label="Ekle" aria-haspopup="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <div class="menu" id="plusMenu" hidden>
+          <button class="mi" id="bImg" type="button"><span>📷</span> Fotoğraf yükle <small>Ctrl+V ile yapıştır</small></button>
+          <div class="mi-sec"><span class="lbl">Yanıt derinliği</span><div class="seg" id="segD"></div></div>
+        </div>
+      </div>
+
+      <textarea id="inp" rows="1" placeholder="Bir şey sor, düşüncelerini paylaş veya konuş..."></textarea>
+
+      <!-- Ajan / model seçici -->
+      <div class="pop">
+        <button class="c-agent" id="bAgent" type="button" aria-haspopup="true">
+          <i class="dot cur"></i><span id="agentLbl">Otomatik</span>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="menu r" id="agentMenu" hidden>
+          <div class="mi-sec"><span class="lbl">Uzman ajan · seçince tema değişir</span></div>
+          <div class="list" id="segR"></div>
+        </div>
+      </div>
+
+      <button class="c-btn" id="send" type="submit" hidden aria-label="Gönder"></button>
+      <button class="c-btn c-mic" id="bMic" type="button" title="Canlı Sesli Sohbet" aria-label="Canlı sesli sohbet">
+        <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+      </button>
+    </form>
+  </section>
+
+  <section class="panels">
+    <div class="pn"><h3><span>Karar Günlüğü</span><span>Son İşlemler</span></h3><div id="log"></div></div>
+    <div class="pn"><h3><span>Ses & AI Motoru</span><span>Omni-Route + Neural TTS</span></h3><div style="color:var(--dim)">Doğal Nöral Ses (Ahmet/Emel) ve Groq Whisper STT aktif.</div></div>
+  </section>
+</div>
+
+<aside class="drawer" id="drawer" hidden>
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <span class="brand">AYARLAR</span>
+    <button class="mini" id="dClose" type="button">KAPAT</button>
+  </div>
+  <div class="fld">
+    <span class="lbl">Asistan Ses Tonu (Ücretsiz Nöral Ses)</span>
+    <select id="voiceSel" style="background:var(--bg);border:1px solid var(--line);padding:8px">
+      <option value="tr-TR-AhmetNeural">Ahmet (Derin, Karizmatik Erkek Sesi)</option>
+      <option value="tr-TR-EmelNeural">Emel (Sıcak, Doğal Kadın Sesi)</option>
+      <option value="en-US-AndrewMultilingualNeural">Andrew (Çok Dilli Uluslararası Ton)</option>
+      <option value="en-US-AvaMultilingualNeural">Ava (Çok Dilli Yumuşak Ton)</option>
+    </select>
+  </div>
+  <div class="fld">
+    <div style="display:flex;justify-content:space-between"><span class="lbl">Kapı Eşiği (Güven)</span><b class="mono" id="gv">0.80</b></div>
+    <input id="gate" type="range" min="0.5" max="0.95" step="0.05" value="0.80">
+  </div>
+  <div class="fld">
+    <span class="lbl">Kişisel Profil Notu</span>
+    <textarea id="prof" rows="3" placeholder="Örn: Üniversite öğrencisiyim, açıklamaları örneklerle yap."></textarea>
+  </div>
+  <div class="fld">
+    <span class="lbl">Özel API Anahtarın (Opsiyonel Groq / Gemini)</span>
+    <input type="password" id="userKey" placeholder="gsk_... veya AIza...">
+  </div>
+</aside>
+
+<div class="toasts" id="toasts"></div>
+<script src="/js/app.js?v=5"></script>
+</body>
+</html>
